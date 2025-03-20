@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FMM Asset Tracking System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="assets/fcx-logo.png" alt="Freeport-McMoRan Logo" id="logo-placeholder">
+            <h1>Asset Tracking System</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#" class="active" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="#" data-page="assets"><i class="fas fa-cubes"></i> Assets</a></li>
+                <li><a href="#" data-page="qr-generator"><i class="fas fa-qrcode"></i> QR Generator</a></li>
+                <li><a href="#" data-page="engraving"><i class="fas fa-laser"></i> Engraving Jobs</a></li>
+                <li><a href="#" data-page="reports"><i class="fas fa-chart-bar"></i> Reports</a></li>
+            </ul>
+        </nav>
+        <div class="user-info">
+            <span><i class="fas fa-user-circle"></i> Admin User</span>
+        </div>
+    </header>
+
+    <main id="content">
+        <!-- Content will be loaded dynamically -->
+    </main>
+
+    <!-- Templates for different pages -->
+    <template id="dashboard-template">
+        <div class="dashboard">
+            <h2>Asset Tracking Dashboard</h2>
+            <div class="dashboard-widgets">
+                <div class="widget">
+                    <h3>Asset Status</h3>
+                    <div class="chart-container">
+                        <canvas id="assetStatusChart"></canvas>
+                    </div>
+                </div>
+                <div class="widget">
+                    <h3>Recent Scans</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Asset ID</th>
+                                    <th>Location</th>
+                                    <th>Time</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recent-scans">
+                                <!-- Populated via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="widget">
+                    <h3>QR Code Stats</h3>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="total-assets">247</span>
+                            <span class="stat-label">Total Assets</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="encoded-assets">183</span>
+                            <span class="stat-label">QR Encoded</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="pending-jobs">24</span>
+                            <span class="stat-label">Pending Jobs</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="widget">
+                    <h3>Engraving Job Queue</h3>
+                    <div class="queue-container">
+                        <div class="progress-bar">
+                            <div class="progress" style="width: 45%;"></div>
+                        </div>
+                        <p><strong>8</strong> assets in queue | <strong>45%</strong> complete today</p>
+                        <button class="btn primary">View Queue</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="assets-template">
+        <div class="assets-page">
+            <div class="page-header">
+                <h2>Asset Management</h2>
+                <div class="actions">
+                    <input type="text" placeholder="Search assets..." id="asset-search">
+                    <button class="btn primary"><i class="fas fa-plus"></i> Add Asset</button>
+                </div>
+            </div>
+            <div class="filter-container">
+                <div class="filter">
+                    <label for="category-filter">Category:</label>
+                    <select id="category-filter">
+                        <option value="">All Categories</option>
+                        <option value="heavy-equipment">Heavy Equipment</option>
+                        <option value="tools">Tools</option>
+                        <option value="vehicles">Vehicles</option>
+                        <option value="parts">Parts</option>
+                    </select>
+                </div>
+                <div class="filter">
+                    <label for="location-filter">Location:</label>
+                    <select id="location-filter">
+                        <option value="">All Locations</option>
+                        <option value="morenci-north">Morenci North</option>
+                        <option value="morenci-south">Morenci South</option>
+                        <option value="central-warehouse">Central Warehouse</option>
+                    </select>
+                </div>
+                <div class="filter">
+                    <label for="status-filter">Status:</label>
+                    <select id="status-filter">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="maintenance">In Maintenance</option>
+                        <option value="decommissioned">Decommissioned</option>
+                    </select>
+                </div>
+            </div>
+            <div class="assets-grid" id="assets-container">
+                <!-- Populated via JavaScript -->
+            </div>
+            <div class="pagination">
+                <button class="btn" disabled><i class="fas fa-chevron-left"></i></button>
+                <span>Page <strong>1</strong> of <strong>8</strong></span>
+                <button class="btn"><i class="fas fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </template>
+
+    <template id="qr-generator-template">
+        <div class="qr-generator-page">
+            <h2>QR Code Generator</h2>
+            <div class="generator-container">
+                <div class="generator-form">
+                    <div class="form-group">
+                        <label for="asset-id">Asset ID</label>
+                        <input type="text" id="asset-id" placeholder="Enter asset ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="asset-category">Category</label>
+                        <select id="asset-category">
+                            <option value="">Select category</option>
+                            <option value="heavy-equipment">Heavy Equipment</option>
+                            <option value="tools">Tools</option>
+                            <option value="vehicles">Vehicles</option>
+                            <option value="parts">Parts</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="asset-location">Location</label>
+                        <select id="asset-location">
+                            <option value="">Select location</option>
+                            <option value="morenci-north">Morenci North</option>
+                            <option value="morenci-south">Morenci South</option>
+                            <option value="central-warehouse">Central Warehouse</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="qr-size">QR Code Size (mm)</label>
+                        <input type="number" id="qr-size" value="30" min="10" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="error-correction">Error Correction</label>
+                        <select id="error-correction">
+                            <option value="L">Level L (7%)</option>
+                            <option value="M">Level M (15%)</option>
+                            <option value="Q">Level Q (25%)</option>
+                            <option value="H" selected>Level H (30%)</option>
+                        </select>
+                    </div>
+                    <button id="generate-qr" class="btn primary">Generate QR Code</button>
+                </div>
+                <div class="qr-preview">
+                    <h3>QR Code Preview</h3>
+                    <div class="qr-container" id="qr-code-display">
+                        <div class="placeholder-text">QR code will appear here</div>
+                    </div>
+                    <div class="qr-info">
+                        <p id="qr-data-string">Data: <span>---</span></p>
+                        <p id="qr-hash">Verification Hash: <span>---</span></p>
+                    </div>
+                    <button id="send-to-engraver" class="btn secondary" disabled>Send to Engraver</button>
+                    <button id="download-svg" class="btn secondary" disabled>Download SVG</button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="engraving-template">
+        <div class="engraving-page">
+            <h2>Laser Engraving Jobs</h2>
+            <div class="tabs">
+                <button class="tab active" data-tab="queue">Job Queue</button>
+                <button class="tab" data-tab="completed">Completed Jobs</button>
+                <button class="tab" data-tab="settings">Engraver Settings</button>
+            </div>
+            <div class="tab-content active" id="queue-tab">
+                <div class="job-queue">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Job ID</th>
+                                <th>Asset</th>
+                                <th>Material</th>
+                                <th>Size (mm)</th>
+                                <th>Created</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="queue-jobs">
+                            <!-- Populated via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tab-content" id="completed-tab">
+                <div class="completed-jobs">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Job ID</th>
+                                <th>Asset</th>
+                                <th>Material</th>
+                                <th>Completed</th>
+                                <th>Operator</th>
+                                <th>Result</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="completed-jobs">
+                            <!-- Populated via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="tab-content" id="settings-tab">
+                <div class="engraver-settings">
+                    <div class="settings-form">
+                        <h3>Engraver Connection</h3>
+                        <div class="form-group">
+                            <label for="engraver-model">Engraver Model</label>
+                            <select id="engraver-model">
+                                <option value="epilog-fusion">Epilog Fusion Pro</option>
+                                <option value="epilog-zing">Epilog Zing 24</option>
+                                <option value="trotec-speedy">Trotec Speedy 400</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="connection-ip">IP Address</label>
+                            <input type="text" id="connection-ip" value="192.168.1.120">
+                        </div>
+                        <div class="form-group">
+                            <label for="connection-port">Port</label>
+                            <input type="number" id="connection-port" value="9100">
+                        </div>
+                        <button class="btn primary">Connect</button>
+                        <button class="btn secondary">Test Connection</button>
+                    </div>
+                    <div class="material-profiles">
+                        <h3>Material Profiles</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Material</th>
+                                    <th>Power (%)</th>
+                                    <th>Speed (mm/s)</th>
+                                    <th>Passes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Carbon Steel</td>
+                                    <td>90</td>
+                                    <td>30</td>
+                                    <td>2</td>
+                                    <td><button class="btn small">Edit</button></td>
+                                </tr>
+                                <tr>
+                                    <td>Stainless Steel</td>
+                                    <td>80</td>
+                                    <td>40</td>
+                                    <td>2</td>
+                                    <td><button class="btn small">Edit</button></td>
+                                </tr>
+                                <tr>
+                                    <td>Aluminum</td>
+                                    <td>70</td>
+                                    <td>60</td>
+                                    <td>3</td>
+                                    <td><button class="btn small">Edit</button></td>
+                                </tr>
+                                <tr>
+                                    <td>Hard Plastics</td>
+                                    <td>40</td>
+                                    <td>100</td>
+                                    <td>1</td>
+                                    <td><button class="btn small">Edit</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <button class="btn secondary"><i class="fas fa-plus"></i> Add Material</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="reports-template">
+        <div class="reports-page">
+            <h2>Reports & Analytics</h2>
+            <div class="report-filters">
+                <div class="form-group">
+                    <label for="report-type">Report Type</label>
+                    <select id="report-type">
+                        <option value="scan-activity">Scan Activity</option>
+                        <option value="asset-status">Asset Status</option>
+                        <option value="engraving-performance">Engraving Performance</option>
+                        <option value="maintenance-history">Maintenance History</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="date-range">Date Range</label>
+                    <select id="date-range">
+                        <option value="today">Today</option>
+                        <option value="week">Last 7 Days</option>
+                        <option value="month">Last 30 Days</option>
+                        <option value="quarter">Last Quarter</option>
+                        <option value="custom">Custom Range</option>
+                    </select>
+                </div>
+                <button class="btn primary">Generate Report</button>
+                <button class="btn secondary">Export Data</button>
+            </div>
+            <div class="report-container">
+                <div class="report-visualization">
+                    <canvas id="reportChart"></canvas>
+                </div>
+                <div class="report-details">
+                    <h3>Report Summary</h3>
+                    <div class="summary-metrics">
+                        <div class="metric">
+                            <span class="metric-value">183</span>
+                            <span class="metric-label">Total Scans</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">42</span>
+                            <span class="metric-label">Unique Assets</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">8</span>
+                            <span class="metric-label">Locations</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-value">15</span>
+                            <span class="metric-label">Users</span>
+                        </div>
+                    </div>
+                    <div class="data-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Scans</th>
+                                    <th>Assets</th>
+                                    <th>Trend</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Mar 15, 2025</td>
+                                    <td>27</td>
+                                    <td>18</td>
+                                    <td><i class="fas fa-arrow-up"></i> 12%</td>
+                                </tr>
+                                <tr>
+                                    <td>Mar 14, 2025</td>
+                                    <td>24</td>
+                                    <td>16</td>
+                                    <td><i class="fas fa-arrow-down"></i> 4%</td>
+                                </tr>
+                                <tr>
+                                    <td>Mar 13, 2025</td>
+                                    <td>25</td>
+                                    <td>15</td>
+                                    <td><i class="fas fa-arrow-up"></i> 8%</td>
+                                </tr>
+                                <tr>
+                                    <td>Mar 12, 2025</td>
+                                    <td>23</td>
+                                    <td>14</td>
+                                    <td><i class="fas fa-arrow-down"></i> 2%</td>
+                                </tr>
+                                <tr>
+                                    <td>Mar 11, 2025</td>
+                                    <td>27</td>
+                                    <td>19</td>
+                                    <td><i class="fas fa-arrow-up"></i> 15%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chart.js/3.7.0/chart.min.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/qr-generator.js"></script>
+    <script src="js/charts.js"></script>
+</body>
+</html>
